@@ -1,72 +1,77 @@
 from lfx.custom.custom_component.component import Component
-from lfx.io import DataInput, MessageTextInput, Output, TableInput, IntInput
-from agentics.core.utils import import_pydantic_from_code
-from agentics.core.transducible_functions import make_transducible_function
-from agentics.core.atype import get_pydantic_fields, pydantic_model_from_dict, create_pydantic_model
+from lfx.io import  MessageTextInput, Output, TableInput, IntInput, DataFrameInput
+from agentics.core.atype import create_pydantic_model
 from agentics import AG
-from agentics.core.transducible_functions import With
-import pandas as pd
+from agentics.core.transducible_functions import generate_prototypical_instances
+
+
 from lfx.schema.table import EditMode
 
-
-# ============================================================
-# Helper: normalize JSON / Data / DataFrame into pandas DataFrame
-# ============================================================
-
-def ensure_dataframe(obj):
-    """Convert Langflow Data or raw JSON into a pandas DataFrame."""
-
-    # Case 1 — Langflow Data wrapper
-    if hasattr(obj, "data"):
-        obj = obj.data
-
-    # Case 2 — JSON reader: {"json": [...]}
-    if isinstance(obj, dict) and "json" in obj:
-        return pd.DataFrame(obj["json"])
-
-    # Case 3 — {"states": [...]}
-    if isinstance(obj, dict) and "states" in obj:
-        return pd.DataFrame(obj["states"])
-
-    # Case 4 — list of dicts
-    if isinstance(obj, list) and all(isinstance(x, dict) for x in obj):
-        return pd.DataFrame(obj)
-
-    # Case 5 — already DF
-    if isinstance(obj, pd.DataFrame):
-        return obj
-
-    raise ValueError(f"Cannot convert to DataFrame: {obj}")
+from crewai import LLM
 
 
-# ============================================================
-# TRANSDUCTION COMPONENT — RETURNS JSON
-# ============================================================
+from lfx.base.models.anthropic_constants import ANTHROPIC_MODELS
+from lfx.base.models.google_generative_ai_constants import GOOGLE_GENERATIVE_AI_MODELS
+from lfx.base.models.openai_constants import OPENAI_CHAT_MODEL_NAMES, OPENAI_REASONING_MODEL_NAMES
+from lfx.inputs.inputs import BoolInput, MessageTextInput, StrInput
+from lfx.io import DropdownInput, SecretStrInput
+from lfx.schema.dataframe import DataFrame
+
+
+
+# IBM watsonx.ai constants
+IBM_WATSONX_DEFAULT_MODELS = ["meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", "openai/gpt-oss-120b"]
+IBM_WATSONX_URLS = [
+    "https://us-south.ml.cloud.ibm.com",
+    "https://eu-de.ml.cloud.ibm.com",
+    "https://eu-gb.ml.cloud.ibm.com",
+    "https://au-syd.ml.cloud.ibm.com",
+    "https://jp-tok.ml.cloud.ibm.com",
+    "https://ca-tor.ml.cloud.ibm.com",
+]
+
+# Ollama API constants
+HTTP_STATUS_OK = 200
+JSON_MODELS_KEY = "models"
+JSON_NAME_KEY = "name"
+JSON_CAPABILITIES_KEY = "capabilities"
+DESIRED_CAPABILITY = "completion"
+#DEFAULT_OLLAMA_URL = "http://localhost:11434"
 
 class Agentics(Component):
-    display_name = "AG"
-    name = "AG"
-    description = "The langflow component for the AG class"
+    display_name = "Agentics"
+    name = "agentics"
+    description = "Enables Map Reduce Style Agentic data transformations amongs dataframes"
+    icon= "Agentics"
     
     
     inputs = [
-        DataInput(
+         DataFrameInput(
             name="source",
-            display_name="Source",
-            info="Accepts JSON (list of dicts or {json:[...]}) or DataFrame.",
-            required=True,
+            display_name="Source DataFrame",
+            info="Accepts JSON (list of dicts) or DataFrame.",
         ),
         
+        DropdownInput(
+            name="transduction_type",
+            display_name="transduction_type",
+            options=["amap", "areduce", "generate"],
+            value="amap",
+            required=True,
+
+        ),
+         
         MessageTextInput(
             name="atype_name",
-            display_name="Atype Name",
-            info="Provide a name for the type of the target states.",
-            value=""
+            display_name="Generated Type",
+            info="Provide a name for the generated target type",
+            value="",
+            required=True,
             # advanced=True,
         ),
         TableInput(
             name="schema",
-            display_name="Schema",
+            display_name="Generated Fields",
             info="Define the structure and data types for the model's output.",
             required=True,
             # TODO: remove deault value
@@ -76,7 +81,7 @@ class Agentics(Component):
                     "display_name": "Name",
                     "type": "str",
                     "description": "Specify the name of the output field.",
-                    "default": "field",
+                    "default": "text",
                     "edit_mode": EditMode.INLINE,
                 },
                 {
@@ -84,7 +89,7 @@ class Agentics(Component):
                     "display_name": "Description",
                     "type": "str",
                     "description": "Describe the purpose of the output field.",
-                    "default": "description of field",
+                    "default": "",
                     "edit_mode": EditMode.POPOVER,
                 },
                 {
@@ -101,55 +106,82 @@ class Agentics(Component):
                     "display_name": "As List",
                     "type": "boolean",
                     "description": "Set to True if this output field should be a list of the specified type.",
-                    "default": "False",
+                    "default": False,
                     "edit_mode": EditMode.INLINE,
                 },
             ],
             value=[
                 {
-                    "name": "field",
-                    "description": "description of field",
+                    "name": "text",
+                    "description": "",
                     "type": "str",
-                    "multiple": "False",
+                    "multiple": False,
                 }
             ],
-        ),
-        DropdownInput(
-            name="transduction_type",
-            display_name="transduction_type",
-            options=["amap", "areduce"],
-            value="amap"
-
         ),
         MessageTextInput(
             name="instructions",
             display_name="instructions",
             value="",
         ),
-        IntInput(
-            name="batch_size",
-            display_name="Number of states that will be executed in parallel (optional)",
-            value=10,
-            required=True,
+        BoolInput(
+            name="merge_source",
+            display_name="merge_source_states",
+            value=True
         ),
-        MessageTextInput(
-            name="atype",
-            display_name="atype",
-            value="",
+       
+        
+        
+        DropdownInput(
+            name="provider",
+            display_name="Model Provider",
+            #options=["OpenAI", "Anthropic", "Google", "IBM watsonx.ai", "Ollama"],
+            options=["IBM watsonx.ai"],
+            #value="IBM watsonx.ai"",
+            info="Select the model provider",
+            real_time_refresh=True,
+            options_metadata=[
+                # {"icon": "OpenAI"},
+                # {"icon": "Anthropic"},
+                # {"icon": "GoogleGenerativeAI"},
+                {"icon": "WatsonxAI"}
+                # {"icon": "Ollama"},
+            ],
+            required = True,
         ),
+        DropdownInput(
+            name="model_name",
+            display_name="Model Name",
+            #options=OPENAI_CHAT_MODEL_NAMES + OPENAI_REASONING_MODEL_NAMES + GOOGLE_GENERATIVE_AI_MODELS + 
+            options= IBM_WATSONX_DEFAULT_MODELS,
+            value=IBM_WATSONX_DEFAULT_MODELS[0],
+            info="Select the model to use",
+            real_time_refresh=True,
+            refresh_button=True,
+        ),
+        SecretStrInput(
+            name="api_key",
+            display_name="OpenAI API Key",
+            info="Model Provider API key",
+            required=False,
+            show=True,
+            real_time_refresh=True,
+        ),
+        StrInput(
+            name="project_id",
+            display_name="watsonx Project ID (Leave blank not use of other providers)",
+            info="The project ID associated with the foundation model (IBM watsonx.ai only)",
+            show=True,
+            required=False,
+        ),
+       
     ]
 
     outputs = [
         Output(
             name="states",
-            display_name="states",
+            display_name="Target DataFrame",
             method="transduce",
-            tool_mode=True
-        ),
-        Output(
-            name="atypeout",
-            display_name="atype",
-            method="get_atype",
             tool_mode=True
         ),
     ]
@@ -159,26 +191,43 @@ class Agentics(Component):
 
     # --------------------------------------------------------
 
-    async def get_atype(self) -> str:
-        return self.atype
-        
+
     
-    async def transduce(self) -> Data:
-        # 1. Normalize input → pandas
-        df = ensure_dataframe(self.source)
-        source = AG.from_dataframe(df)
-        if self.atype_name != "":
-            schema_fields = [(field["name"] , field["description"], field["type"], False) for field in self.schema]
-            atype = create_pydantic_model(schema_fields, name=self.atype_name)
-            self.atype= str(get_pydantic_fields(atype))
-        elif self.atype:
-            atype = import_pydantic_from_code(self.atype)
-        else: return {"json": []}
-        target = AG(atype=atype, 
-                instructions=self.instructions, 
-                transduction_type=self.transduction_type,
-                amap_batch_size=self.batch_size)
-        output=await (target << source)
-        json_rows = [m.dict() for m in output.states]
-        return {"json": json_rows}
+    async def transduce(self) ->  DataFrame:
+        llm=None
+        if self.provider == "IBM watsonx.ai":
+            llm = LLM(
+                    model="watsonx/" + self.model_name,
+                    base_url="https://us-south.ml.cloud.ibm.com",
+                    project_id=self.project_id,
+                    api_key=self.api_key,
+                    temperature=0,
+                    max_tokens=4000,
+                    max_input_tokens=100000)
+                    
+        else: return "Please fix model paramters"
         
+        # print("AAAAAA" , type(self.source))
+        
+        # if isinstance(self.source, list):
+            
+        source = AG.from_dataframe(DataFrame(self.source))
+        schema_fields = [(field["name"] , field["description"], field["type"] if field["multiple"] == False else f'list[{field["type"]}]' , False) for field in self.schema]
+        atype = create_pydantic_model(schema_fields, name=self.atype_name)
+        if self.transduction_type == "generate":
+            output_states = await generate_prototypical_instances(atype,n_instances=10)
+            output = AG(states=output_states)
+        else:
+        
+            target = AG(atype=atype, 
+                    instructions=self.instructions, 
+                    transduction_type=self.transduction_type,
+                    amap_batch_size=10,
+                    llm=llm)
+            output=await (target << source)
+            if self.merge_source:
+                output = source.merge_states(output)
+        
+        
+        df = output.to_dataframe()
+        return df.to_dict(orient="records")
