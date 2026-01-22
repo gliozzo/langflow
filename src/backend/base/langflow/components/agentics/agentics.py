@@ -176,7 +176,7 @@ class Agentics(Component):
             real_time_refresh=True,
             advanced=True
         ),
-        StrInput(
+        SecretStrInput(
             name="project_id",
             display_name="watsonx Project ID (Leave blank not use of other providers)",
             info="The project ID associated with the foundation model (IBM watsonx.ai only)",
