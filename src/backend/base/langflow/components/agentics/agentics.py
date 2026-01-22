@@ -127,7 +127,14 @@ class Agentics(Component):
         BoolInput(
             name="merge_source",
             display_name="merge_source_states",
-            value=True
+            value=True,
+            advanced=True
+        ),
+        IntInput(
+            name="batch_size",
+            display_name="Batch Size",
+            value=10,
+            advanced=True
         ),
        
         
@@ -156,6 +163,7 @@ class Agentics(Component):
             options= IBM_WATSONX_DEFAULT_MODELS,
             value=IBM_WATSONX_DEFAULT_MODELS[0],
             info="Select the model to use",
+            advanced=True,
             real_time_refresh=True,
             refresh_button=True,
         ),
@@ -166,6 +174,7 @@ class Agentics(Component):
             required=False,
             show=True,
             real_time_refresh=True,
+            advanced=True
         ),
         StrInput(
             name="project_id",
@@ -173,6 +182,7 @@ class Agentics(Component):
             info="The project ID associated with the foundation model (IBM watsonx.ai only)",
             show=True,
             required=False,
+            advanced=True
         ),
        
     ]
@@ -215,17 +225,17 @@ class Agentics(Component):
         schema_fields = [(field["name"] , field["description"], field["type"] if field["multiple"] == False else f'list[{field["type"]}]' , False) for field in self.schema]
         atype = create_pydantic_model(schema_fields, name=self.atype_name)
         if self.transduction_type == "generate":
-            output_states = await generate_prototypical_instances(atype,n_instances=10)
+            output_states = await generate_prototypical_instances(atype,n_instances=self.batch_size)
             output = AG(states=output_states)
         else:
         
             target = AG(atype=atype, 
                     instructions=self.instructions, 
                     transduction_type=self.transduction_type,
-                    amap_batch_size=10,
+                    amap_batch_size=self.batch_size,
                     llm=llm)
             output=await (target << source)
-            if self.merge_source:
+            if self.merge_source and self.transduction_type == "amap":
                 output = source.merge_states(output)
         
         
