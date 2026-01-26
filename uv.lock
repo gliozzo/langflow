@@ -93,8 +93,8 @@ wheels = [
 
 [[package]]
 name = "agentics-py"
-version = "0.2.1.post1.dev0+556040f"
-source = { git = "https://github.com/IBM/Agentics.git?rev=langflow-dep-compat#556040f0c33095d566f8c2d1ea93332e6723cf9d" }
+version = "0.2.2a1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiosqlite" },
     { name = "crewai" },
@@ -118,6 +118,10 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
     { name = "streamlit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c4/a2/013fe9bb627032f974a9b96a1a854b7211647370d194ecf6dee91efd7f43/agentics_py-0.2.2a1.tar.gz", hash = "sha256:f1f1d8300f16f9db3736745e326a95a7f9fa457ac223e94e98466200718861d5", size = 48429, upload-time = "2026-01-26T13:45:58.214Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/84/4a5845d9fa17e96a6a5c6f3a2e5ad627a5a3a64594d700f4c8b6077d344a/agentics_py-0.2.2a1-py3-none-any.whl", hash = "sha256:749281831a4101ac86b50f734367424a671197cbba5b1979401d3e0887490681", size = 53883, upload-time = "2026-01-26T13:45:56.642Z" },
 ]
 
 [[package]]
@@ -6013,7 +6017,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "agent-lifecycle-toolkit", specifier = "~=0.4.4" },
-    { name = "agentics-py", git = "https://github.com/IBM/Agentics.git?rev=langflow-dep-compat" },
+    { name = "agentics-py", specifier = "==0.2.2a1" },
     { name = "aioboto3", specifier = ">=15.2.0,<16.0.0" },
     { name = "aiofile", specifier = ">=3.9.0,<4.0.0" },
     { name = "aiosqlite", specifier = "==0.21.0" },

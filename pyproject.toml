@@ -139,7 +139,7 @@ dependencies = [
     "agent-lifecycle-toolkit~=0.4.4",
     "astrapy>=2.1.0,<3.0.0",
     "aioboto3>=15.2.0,<16.0.0",
-    "agentics-py",
+    "agentics-py==0.2.2a1",
 ]
 
 
@@ -197,7 +197,6 @@ dev = [
 langflow-base = { workspace = true }
 langflow = { workspace = true }
 lfx = { workspace = true }
-agentics-py = { git = "https://github.com/IBM/Agentics.git", rev = "langflow-dep-compat" }
 
 [tool.uv.workspace]
 members = [
