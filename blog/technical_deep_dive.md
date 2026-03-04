@@ -1,6 +1,6 @@
 # Transform Tabular Data with LLMs using Agentics Bundle in Langflow
 
-*Written by [Author Name] · [Date]*
+*Written by Alfio Gliozzo, Junkyu Lee, Nandana Mihindukulasooriya*
 
 ---
 Langflow 1.8 ships with the **Agentics bundle**, three new components that bring LLM-powered tabular data transformation directly into the visual flow builder. 
@@ -21,7 +21,7 @@ It batches rows asynchronously for high throughput, enforces structured output w
 <p align="center">
   <img src="imgs/three_components.png" alt="Agentics Components" width="85%" />
   <br>
-  <em>Agentics Components: aMAP, aReduce, and aGenreate</em>
+  <em>Agentics Components: aMap, aReduce, and aGenerate</em>
 </p>
 
 Agentics provides a unified abstraction layer over LLM‑based inference, turning raw model calls into typed, and batched transductions. 
@@ -144,12 +144,21 @@ the first step is transforming each review with structured sentiment data.
 - Add an **aMap** component from the Agentics bundle (found under Bundles in Langflow)
 - Define a schema with three new columns:
   - `sentiment_label` (string): "positive", "negative", or "neutral"
-  - `sentiment_score` (float): Confidence score from 0 to 1
+  - `confidence_score` (float): Confidence score from 0 to 1
   - `explanation` (string): Brief reasoning for the sentiment classification
 - Provide an instruction to guide the LLM:
 ```
-"Analyze the sentiment of review summary and text fields
-and generate the sentiment label, score, and explanation."
+# Task Description
+Perform sentiment analysis task on the input data.
+Examine summary and text field,
+if the sentiment is good then sentiment label is positive.
+if the sentiment is bad then sentiment label is negative.
+if the sentiment is neither good or bad then sentiment label is neutral.
+
+## Constraint
+* The sentiment label must take values **positive**, **negative**, **neutral**. No other labels are allowed, such as good, bad, mixed, etc.
+* Confidence score is the degree of confidence that the assigned sentiment value is truthful. Generate floating point number between 0 and 1.0. 0 indicates no confidence at all, and 1.0 indicates absolutely confident. The sentiment score must be greater than equal to 0 and less than or equal to 1.0.
+* Explanation gives the support why the sentiment value was assigned from the input summary and text field.
 ```
 
 The aMap component processes each review row independently using parallel agents. Instead of writing custom parsing logic, you define the schema in the UI, and Agentics:
@@ -206,8 +215,8 @@ This report provides the product team with clear, data-driven insights derived f
 For positive reviews, we generate structured data for an advertising campaign.
 - Add another **aReduce** component for positive reviews
 - Define a richer schema:
-  - `google ad title` (string): Catchy advertisement headline
-  - `google ad text` (string): Compelling ad copy
+  - `ad_title` (string): Catchy advertisement headline
+  - `ad_text` (string): Compelling ad copy
   - `positive keywords` (list): positive keywords
   - `negative keywords` (list): negative keywords
   - `target audience` (string): target audience
@@ -247,8 +256,7 @@ This workflow demonstrates the core strengths of the Agentics bundle:
 
 ## Conclusion
 
-The Agentics bundle in Langflow 1.8 makes LLM-powered tabular data transformation a first-class citizen in the visual flow builder. Langflow with the three Agentics components — **aMap**, **aReduce**, and **aGenerate** — cover the full lifecycle of structured data work: enriching rows, aggregating insights, and synthesizing new data.
-
+The Agentics bundle in Langflow 1.8 makes LLM-powered tabular data transformation a first-class citizen in the visual flow builder. 
 
 With Agentics, you move beyond ad‑hoc “prompt and parse” experiments into a stable, scalable pattern for real LLM‑driven data workflows. 
 Langflow with the three Agentics components — **aMap**, **aReduce**, and **aGenerate** — cover the full lifecycle of structured data work: enriching rows, aggregating insights, and synthesizing new data.
