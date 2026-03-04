@@ -155,11 +155,17 @@ if the sentiment is good then sentiment label is positive.
 if the sentiment is bad then sentiment label is negative.
 if the sentiment is neither good or bad then sentiment label is neutral.
 
-## Constraint
+# Constraint
 * The sentiment label must take values **positive**, **negative**, **neutral**. No other labels are allowed, such as good, bad, mixed, etc.
 * Confidence score is the degree of confidence that the assigned sentiment value is truthful. Generate floating point number between 0 and 1.0. 0 indicates no confidence at all, and 1.0 indicates absolutely confident. The sentiment score must be greater than equal to 0 and less than or equal to 1.0.
 * Explanation gives the support why the sentiment value was assigned from the input summary and text field.
 ```
+
+<p align="center">
+  <img src="imgs/amap_component.png" alt="aMap Component" width="35%" />
+  <br>
+  <em>aMap Component populating desired schema as a table and instructions</em>
+</p>
 
 The aMap component processes each review row independently using parallel agents. Instead of writing custom parsing logic, you define the schema in the UI, and Agentics:
 - Generates structured prompts automatically
@@ -176,7 +182,6 @@ Once complete, the Target DataFrame displays all three generated fields with con
   <br>
   <em>Output Dataframe with Structured Sentiment Data</em>
 </p>
-
 
 
 #### Step 3: Filtering Reviews by Sentiment
@@ -198,6 +203,14 @@ Now we aggregate negative reviews into actionable insights.
 Write a report describing how to improve the product given the negative reviews. 
 Generate the report in Markdown.
 ```
+
+<p align="center">
+  <img src="imgs/areduce_component.png" alt="aReduce Component" width="35%" />
+  <br>
+  <em>aReduce Component with a schema and instructions</em>
+</p>
+
+
 The aReduce component processes all rows in the DataFrame collectively, identifies patterns and themes across reviews, 
 and generates a single, structured output conforming to the schema
 
@@ -227,29 +240,14 @@ Generate an advertisement campaign for Google ads for the product highlighting t
 - Enable the **"as List"** option in the aReduce component to generate multiple campaign variations from the same data.
 
 **Output example:**
-One of the structured output following the provided schema. 
-```json
-{
-  "ad_title": "Raw Boost Bites Freeze-Dried Treats",
-  "ad_text": "Give dogs & cats a treat they go crazy for. High-protein, grain-free, no artificial colors or preservatives. Easy to break into training pieces, low odor, made in the USA—pets love the taste and owners love the ingredients.",
-  "positive_keywords": ["Raw Boost Bites",  "freeze dried pet treats", "no artificial preservatives pet treats", ...],
-  "negative_keywords": ["free", "cheap", "bulk", ... ],
-  "target_audience": "Pet owners (dog and cat owners) seeking high-quality, healthy, grain-free, high-protein treats with clean ingredients; especially those interested in freeze-dried/raw-style treats, training treats that break into small pieces, and options for pets with sensitivities/allergies."
-}
-```
+<p align="center">
+  <img src="imgs/json_output.png" alt="Json Output" width="85%" />
+  <br>
+  <em>Multiple capaign variations</em>
+</p>
+
 The marketing team now has ready-to-use campaign materials grounded in actual customer feedback, 
 complete with targeting parameters for ad platforms.
-
-#### Why This Approach Works
-
-This workflow demonstrates the core strengths of the Agentics bundle:
-
-1. **Typed, validated outputs**: Every field conforms to the declared schema—no parsing errors or inconsistent formats
-2. **Parallel execution**: aMap processes multiple reviews concurrently, respecting rate limits while maximizing throughput
-3. **Composable operations**: Map and Reduce operations chain naturally with Langflow's existing components
-4. **Zero boilerplate**: No custom prompt engineering, parsing logic, or retry handling required
-5. **Visual, reproducible**: The entire pipeline is built in Langflow's canvas and can be shared, versioned, and deployed
-
 
 
 ---
@@ -257,6 +255,13 @@ This workflow demonstrates the core strengths of the Agentics bundle:
 ## Conclusion
 
 The Agentics bundle in Langflow 1.8 makes LLM-powered tabular data transformation a first-class citizen in the visual flow builder. 
+
+The workflow in the use case demonstrates the core strengths of the Agentics bundle:
+1. **Typed, validated outputs**: Every field conforms to the declared schema—no parsing errors or inconsistent formats
+2. **Parallel execution**: aMap processes multiple reviews concurrently, respecting rate limits while maximizing throughput
+3. **Composable operations**: Map and Reduce operations chain naturally with Langflow's existing components
+4. **Visual, reproducible**: The entire pipeline is built in Langflow's canvas and can be shared, versioned, and deployed
+
 
 With Agentics, you move beyond ad‑hoc “prompt and parse” experiments into a stable, scalable pattern for real LLM‑driven data workflows. 
 Langflow with the three Agentics components — **aMap**, **aReduce**, and **aGenerate** — cover the full lifecycle of structured data work: enriching rows, aggregating insights, and synthesizing new data.
@@ -270,6 +275,4 @@ Instead of wrestling with inconsistent schemas, parsing failures, or manual batc
 - [Agentics official documentation](https://ibm.github.io/Agentics/)
 - [Agentics GitHub repository](https://github.com/IBM/agentics/)
 - [Transduction is All You Need for Structured Data Workflows (arXiv)](https://arxiv.org/abs/2508.15610)
-- [Langflow global variables configuration](https://docs.langflow.org/configuration-global-variables)
 - [Agentics bundle documentation](https://docs.langflow.org/bundles-agentics)
-- [J. McAuley and J. Leskovec. From amateurs to connoisseurs: modeling the evolution of user expertise through online reviews. WWW, 2013.](http://i.stanford.edu/~julian/pdfs/www13.pdf)
