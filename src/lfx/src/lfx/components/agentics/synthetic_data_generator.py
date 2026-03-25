@@ -118,8 +118,9 @@ class SyntheticDataGenerator(BaseAgenticComponent):
             llm=llm,
             instructions=instructions,
         )
-        if self.source:
-            output_states = source.states + output_states
-        output = AG(states=output_states)
-
-        return DataFrame(output.to_dataframe().to_dict(orient="records"))
+        if output_states:
+            if self.source:
+                output_states = source.states + output_states
+            output = AG(atype=atype, states=output_states)
+            return DataFrame(output.to_dataframe().to_dict(orient="records"))
+        return DataFrame([])
